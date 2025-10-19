@@ -9,7 +9,10 @@
 **RESTORE:** restore original VER.206 settings file.   
 **RUN RPCS3:** run the emulator.            
 **RUN TEKKEN 6:** run the game directly.                
-**EXIT RPCS3:** stop all rpcs3.exe processes.           
+**EXIT RPCS3:** stop all rpcs3.exe processes.     
+
+
+
 
 ![t6br-patcher.png](media/t6br-patcher.png)
 
