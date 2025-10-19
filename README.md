@@ -1,6 +1,6 @@
 # t6br-patcher
 
-![DEFAULT_256.PNG](media/DEFAULT_256.PNG)     
+![DEFAULT_256.png](media/DEFAULT_256.png)
 
 ## Buttons:    
                             
