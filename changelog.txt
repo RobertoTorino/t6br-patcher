@@ -33,3 +33,6 @@
 [20251019_204746] Built t6br-patcher_v1.0.5.exe with version 1.0.5
 [20251019_205113] Built t6br-patcher_v1.0.6.exe with version 1.0.6
 [20251019_205346] Built t6br-patcher_v1.0.7.exe with version 1.0.7
+[2025-10-19 20:59] v2.0.0
+
+
