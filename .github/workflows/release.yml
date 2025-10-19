@@ -1,0 +1,178 @@
+# T6BR Patcher continuous integration workflow configuration
+name: CI Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.0
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up UTF-8 and PowerShell output
+        shell: pwsh
+        run: |
+          $OutputEncoding = [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+          Write-Host ":: Using PowerShell version: $($PSVersionTable.PSVersion)"
+
+      - name: Build EXE, move to root, UPX and create ZIP
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $repoRoot     = $env:GITHUB_WORKSPACE
+          $baseFile     = Join-Path $repoRoot "ahk\Compiler\Unicode 32-bit.bin"
+          $ahkCompiler  = Join-Path $repoRoot "ahk\Compiler\Ahk2Exe.exe"
+          $mediaFolder  = Join-Path $repoRoot "media"
+          $input        = Join-Path $repoRoot "t6br-patcher.ahk"
+          $output       = Join-Path $repoRoot "t6br-patcher.exe"
+          $icon         = Join-Path $repoRoot "media\default.ico"
+          $upxPath      = Join-Path $repoRoot "upx\upx.exe"
+          $versionTxt   = Join-Path $repoRoot "version.txt"
+          $versionDat   = Join-Path $repoRoot "version.dat"
+          $readmePath   = "README.txt"
+          $ver206gPath  = Join-Path $repoRoot "VER.206G"
+          $ver206oPath  = Join-Path $repoRoot "VER.206O" 
+          $ver206tPath  = Join-Path $repoRoot "VER.206T" 
+          $extraAssets  = @($readmePath, $licensePath, $versionTxt, $versionDat, $ver206gPath, $ver206oPath, $ver206tPath)
+          
+          # Extract version number from GitHub tag
+          $rawTag = "${env:GITHUB_REF_NAME}"
+          $version = $rawTag -replace '^v', ''
+          Write-Host ":: Detected version: $version"
+
+          # Define versioned file names
+          $versionedExe = "t6br-patcher_v$version.exe"
+          $zipName = "t6br-patcher_v$version.zip"
+          
+          $requiredFiles = @($ahkCompiler,$baseFile, $input, $ver206gPath, $ver206oPath, $ver206tPath)
+          
+          foreach ($file in $requiredFiles) {
+            if (!(Test-Path $file)) {
+              Write-Error ":: Required file not found: $file"
+              exit 1
+            }
+            Write-Host ":: Found: $file"
+          }
+
+          foreach ($file in @($baseFile, $ahkCompiler, $input, $icon, $ver206gPath, $ver206oPath, $ver206tPath)) {
+          if (!(Test-Path $file)) {
+          Write-Error "Required file missing: $file"
+          exit 1
+            } else {
+              Write-Host ":: Found: $file"
+            }
+          }
+
+          # --- Compile ---
+          $compileJob = Start-Process -FilePath $ahkCompiler `
+          -ArgumentList "/in `"$input`" /out `"$output`" /icon `"$icon`" /base `"$baseFile`" /silent" `
+          -NoNewWindow -PassThru -Wait -ErrorAction Stop
+          
+          if ($compileJob.ExitCode -ne 0) {
+            Write-Error "Ahk2Exe failed with exit code $($compileJob.ExitCode)"
+            exit 1
+            }
+
+          # Always move EXE to $env:GITHUB_WORKSPACE
+          $repoRoot = $env:GITHUB_WORKSPACE
+          $compiledExe = Join-Path $PWD $output
+          $finalExe    = $output
+
+          # Normal move/copy logic
+          if ((Test-Path $compiledExe) -and ($compiledExe -ne $finalExe)) {
+            Move-Item $compiledExe $finalExe -Force
+            Write-Host ":: Moved EXE to $finalExe"
+          }
+
+          # Deep magic: if not found, check hardcoded place and copy
+          if (!(Test-Path $finalExe)) {
+            $knownGood = "D:\a\t6br-patcher\t6br-patcher\t6br-patcher.exe"
+            if (Test-Path $knownGood) {
+              Write-Host ":: Found EXE at $knownGood after all! Copying to $finalExe"
+              Copy-Item $knownGood $finalExe -Force
+            }
+          }
+          
+          Write-Host ":: Looking for output exe in current folder and repo root..."
+          
+          Get-ChildItem -Path $PWD -Filter "t6br-patcher.exe" -Recurse | ForEach-Object { Write-Host "Found EXE at $($_.FullName)" }
+          Get-ChildItem -Path $repoRoot -Filter "t6br-patcher.exe" -Recurse | ForEach-Object { Write-Host ":: Found EXE at $($_.FullName)" }
+
+          Write-Host ":: Looking for output at: $finalExe"
+          Start-Sleep -Seconds 2
+          if (!(Test-Path $finalExe)) {
+            Write-Error ":: Build failed — output exe still not found at $finalExe"
+            exit 1
+          }
+
+          # UPX
+          Write-Host ":: Compressing exe..."
+          if (Test-Path $upxPath) {
+            & $upxPath --best --lzma $finalExe
+          }
+          
+          # Rename EXE to include version number
+          if (Test-Path $finalExe) {
+            Rename-Item -Path $finalExe -NewName $versionedExe -Force
+            Write-Host ":: Renamed $finalExe to $versionedExe"
+            $finalExe = $versionedExe
+          } else {
+            Write-Error ":: Expected EXE not found for renaming"
+            exit 1
+          }
+
+          # ZIP
+          $toZip = @($finalExe)
+          
+          foreach ($file in @($ahkCompiler, $baseFile, $input, $icon)) {
+            if (!(Test-Path $file)) {
+            Write-Error "Required file missing: $file"
+            exit 1
+              } else {
+                Write-Host ":: Found: $file"
+              }
+            }
+          
+          foreach ($folder in @($mediaFolder)) {
+            if (Test-Path $folder) {
+              $files = Get-ChildItem -Path $folder -Recurse -File | Select-Object -ExpandProperty FullName
+              $toZip += $files
+              Write-Host ":: Added folder: $folder"
+            } else {
+              Write-Warning "Missing folder: $folder"
+            }
+          }
+          
+          foreach ($asset in $extraAssets) {
+            $assetAbs = Join-Path $repoRoot $asset
+            if (Test-Path $assetAbs) {
+              $toZip += $assetAbs
+              Write-Host ":: Added to zip: $assetAbs"
+            } else {
+              Write-Warning "Not adding (missing): $assetAbs"
+            }
+          }
+          
+          Compress-Archive -Path $toZip -DestinationPath (Join-Path $repoRoot $zipName) -Force
+          Write-Host ":: Created ZIP archive: $zipName"
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            t6br-patcher_v*.exe
+            t6br-patcher_v*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

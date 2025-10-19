@@ -1,0 +1,16 @@
+
+[] Built t6br-patcher_v.exe with version 
+[] Built t6br-patcher_v.exe with version 
+[] Built t6br-patcher.exe_v.exe with version 
+[] Built t6br-patcher_v.exe with version 
+[] Built t6br-patcher_v.exe with version 
+[] Built t6br-patcher_v.exe with version 
+[20251018_234145] Built t6br-patcher_v20251018_234145.exe with version 20251018_234145
+[20251018_235114] Built t6br-patcher_v20251018_235114.exe with version 20251018_235114
+[20251019_001141] Built t6br-patcher_v20251019_001141.exe with version 20251019_001141
+[20251019_001426] Built t6br-patcher_v20251019_001426.exe with version 20251019_001426
+[20251019_002017] Built t6br-patcher_v20251019_002017.exe with version 20251019_002017
+[20251019_002434] Built t6br-patcher_v20251019_002434.exe with version 20251019_002434
+[20251019_003654] Built t6br-patcher_v20251019_003654.exe with version 20251019_003654
+[20251019_013859] Built t6br-patcher_v20251019_013859.exe with version 20251019_013859
+[20251019_020847] Built t6br-patcher_v20251019_020847.exe with version 20251019_020847
