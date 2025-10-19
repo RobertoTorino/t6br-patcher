@@ -12,9 +12,12 @@ rpcs3Exe  := A_ScriptDir . "\rpcs3.exe"
 ebootPath := basePath . "\EBOOT.BIN"
 
 ; === Install each file (must be literal for FileInstall in AHK v1) ===
-FileInstall, VER.206G, %A_ScriptDir%\VER.206G, 0
-FileInstall, VER.206O, %A_ScriptDir%\VER.206O, 0
-FileInstall, VER.206T, %A_ScriptDir%\VER.206T, 0
+FileInstall, jp/VER.206G, %A_ScriptDir%\VER.206G, 0
+FileInstall, jp/VER.206O, %A_ScriptDir%\VER.206O, 0
+FileInstall, jp/VER.206T, %A_ScriptDir%\VER.206T, 0
+FileInstall, cn/VER.206CNG, %A_ScriptDir%\VER.206CNG, 0
+FileInstall, cn/VER.206CNO, %A_ScriptDir%\VER.206CNO, 0
+FileInstall, cn/VER.206CNT, %A_ScriptDir%\VER.206CNT, 0
 
 
 ; ─── Set as admin. ─────────────────────────────────────────
@@ -32,29 +35,51 @@ if not A_IsAdmin
 }
 
 ; ─── GUI ─────────────────────────────────────────────────
-Gui, Add, Text, x20 y10 w300, Select VER.206 version to apply:
-Gui, Add, Button, x20 y40 w100 h30 gSetTest, TEST
-Gui, Add, Button, x140 y40 w100 h30 gSetGame, GAME
-Gui, Add, Button, x260 y40 w100 h30 gSetRestore, RESTORE
-Gui, Add, Button, x20  y90 w100 h30 gRunRPCS3, RUN RPCS3
-Gui, Add, Button, x140 y90 w100 h30 gRunGame, RUN TEKKEN 6
-Gui, Add, Button, x260 y90 w100 h30 gQuitRPCS3, EXIT RPCS3
+Gui, Add, Text,      x10 y10 w300, Select VER.206 patch to apply for the JP version of the game:
+Gui, Add, Button,    x10 y25 w100 h30 gSetTest, TEST
+Gui, Add, Button,   x120 y25 w100 h30 gSetGame, GAME
+Gui, Add, Button,   x230 y25 w100 h30 gSetRestore, RESTORE
+
+Gui, Add, Text,      x10 y65 w300, Select VER.206 patch to apply for the CN version of the game:
+Gui, Add, Button,    x10 y80 w100 h30 gSetTestcn, TEST
+Gui, Add, Button,   x120 y80 w100 h30 gSetGamecn, GAME
+Gui, Add, Button,   x230 y80 w100 h30 gSetRestorecn, RESTORE
+
+Gui, Add, GroupBox,  x10 y115 w320 h45
+Gui, Add, Button,    x15 y125 w100 h30 gRunRPCS3, RUN RPCS3
+Gui, Add, Button,   x120 y125 w100 h30 gRunGame, RUN TEKKEN 6
+Gui, Add, Button,   x225 y125 w100 h30 gQuitRPCS3, EXIT RPCS3
+
+Gui, Add, Text,     x10 y168 w300, Note: make sure your app name is rpcs3.exe!
 
 title := "T6BR Patcher - " . Chr(169) . " " . A_YYYY . " - Philip"
-Gui, Show, w400 h150, %title%
+Gui, Show, w340 h190, %title%
 return
 
-; ─── BUTTON HANDLERS ─────────────────────────────────────
+; ─── BUTTON HANDLERS JP ─────────────────────────────────────
 SetTest:
-    SwitchVersion("T")
+    SwitchVersionJP("JPT")
 return
 
 SetGame:
-    SwitchVersion("G")
+    SwitchVersionJP("JPG")
 return
 
 SetRestore:
-    SwitchVersion("O")
+    SwitchVersionJP("JPO")
+return
+
+; ─── BUTTON HANDLERS CN ─────────────────────────────────────
+SetTestcn:
+    SwitchVersionCN("CNT")
+return
+
+SetGamecn:
+    SwitchVersionCN("CNG")
+return
+
+SetRestorecn:
+    SwitchVersionCN("CNO")
 return
 
 
@@ -85,7 +110,7 @@ RunGame:
 return
 
 
-; ─── Kill RPCS3 with button function. ────────────────────────────────────────────────────────────────────
+; ─── Kill RPCS3 with exit button function. ────────────────────────────────────────────────────────────────────
 QuitRPCS3:
     Process, Exist, rpcs3.exe
     pid := ErrorLevel
@@ -117,7 +142,27 @@ KillAllProcesses(pid := "") {
 
 
 ; ─── FUNCTION ─────────────────────────────────────────────
-SwitchVersion(type)
+SwitchVersionJP(type)
+{
+    global basePath
+    source := A_ScriptDir . "\VER.206" . type
+    target := basePath . "\VER.206"
+
+    if !FileExist(source) {
+        MsgBox, 48, Error, Missing source file:`n%source%
+        return
+    }
+
+    FileDelete, %target%
+    FileCopy, %source%, %target%, 1
+
+    if ErrorLevel
+        MsgBox, 48, Error, Failed to copy file!
+    else
+        MsgBox, 64, Done, Switched to version: %type%
+}
+
+SwitchVersionCN(type)
 {
     global basePath
     source := A_ScriptDir . "\VER.206" . type
