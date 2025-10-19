@@ -117,10 +117,11 @@ jobs:
           }
 
           # UPX
-#          Write-Host ":: Compressing exe..."
-#          if (Test-Path $upxPath) {
-#            & $upxPath --best --lzma $finalExe
-#          }
+          Write-Host ":: Skipping UPX compression to prevent antivirus false positives."
+          # if (Test-Path $upxPath) {
+          #   & $upxPath --best --lzma $finalExe
+          # }
+          
           
           # Rename EXE to include version number
           if (Test-Path $finalExe) {
